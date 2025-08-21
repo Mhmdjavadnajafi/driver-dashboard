@@ -1,10 +1,12 @@
+// components/Container.jsx
 import { Contnet } from "./Content";
 import { Navbar } from "./Navbar";
-export function Container() {
+
+export function Container({ setSidebarOpen }) {
     return (
-        <div className="min-h-screen w-full">
-            <Navbar></Navbar>
-            <Contnet></Contnet>
+        <div className="h-full w-full flex flex-col">
+            <Navbar setSidebarOpen={setSidebarOpen} />
+            <Contnet />
         </div>
     );
 }

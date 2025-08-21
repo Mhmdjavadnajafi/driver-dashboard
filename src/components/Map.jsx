@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "@neshan-maps-platform/react-openlayers/dist/style.css";
 import "@neshan-maps-platform/mapbox-gl/dist/NeshanMapboxGl.css";
 import person from "../assets/images/person.jpeg";
-import home from "../assets/images/home.jpeg";
+import home from "../assets/images/location.png";
 import {
     MapContainer,
     TileLayer,
@@ -132,12 +132,11 @@ const MAP = ({ data, setData }) => {
     return (
         <div className="w-full h-full z-0 rounded-xl overflow-hidden relative">
             <MapContainer
-                center={[35.69972169335737, 51.33797230866538]}
-                zoom={14}
+                center={[33.4878, 48.3558]} // مختصات خرم‌آباد
+                zoom={13}
                 style={{ height: "100%", width: "100%", zIndex: 10 }}
                 whenCreated={(mapInstance) => {
                     console.log(mapInstance);
-
                     mapRef.current = mapInstance;
                 }}
             >
