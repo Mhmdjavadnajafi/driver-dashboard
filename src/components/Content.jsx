@@ -482,14 +482,12 @@ const handleProvinceBlur = () => {
                     <div className="col-span-12 sm:col-span-4 h-[57px] flex flex-wrap items-center gap-2">
                         <span className="vazir-medium text-[#909090] w-full sm:w-auto">تاریخ تولد</span>
 
-                        <input
-                            type="number"
-                            placeholder="روز"
-                            value={day} // مقدار پاک نمی شود
+                        <select
+                            value={day}
                             onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, "").slice(0, 2);
+                                const value = e.target.value;
                                 setDay(value);
-                                if (+value >= 1 && +value <= 31) setErrorDayField(false); // اگر معتبر شد، خطا پاک شود
+                                if (+value >= 1 && +value <= 31) setErrorDayField(false); // معتبر → خطا پاک میشه
                             }}
                             onBlur={() => {
                                 const isValid = day && +day >= 1 && +day <= 31;
@@ -497,8 +495,17 @@ const handleProvinceBlur = () => {
                             }}
                             className={`w-[81px] h-[50px] border rounded-xl px-2 text-center vazir-medium text-[14px] text-[#909090] bg-white transition-all duration-300 ease-in-out
         ${errorDayField ? "border-2 border-red-600 animate-shake" : "border-[#909090]"} 
-        focus:border-[#B9A278] focus:shadow-md focus:scale-105`}
-                        />
+        focus:border-[#B9A278] focus:shadow-md focus:scale-105
+        appearance-none`}
+                        >
+                            <option value="">روز</option>
+                            {Array.from({ length: 31 }, (_, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                    {i + 1}
+                                </option>
+                            ))}
+                        </select>
+
 
 
 
