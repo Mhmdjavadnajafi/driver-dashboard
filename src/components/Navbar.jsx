@@ -1,7 +1,7 @@
 // components/Navbar.jsx
-import Logo from "../assets/images/Untitled-2 3 (2).png";
 import { CgMenuRight } from "react-icons/cg";
 import BigLogo from '../assets/images/BigLogo.png'
+
 export function Navbar({ setSidebarOpen }) {
     return (
         <header className="w-full bg-white py-3 px-10 shadow-lg">
