@@ -121,31 +121,49 @@ export function Contnet() {
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
 
-    const handleSave = async () => {
+    const handleSave = async (e) => {
+        e.preventDefault();
+
         try {
+            const loginRes = await axios.post("https://api.tda24.ir/api/users_aslii/login/", {
+                phoneNumber: "09216919291",
+                password: "Aa00100",
+            });
+
+            const tokens = loginRes.data.data?.tokens;
+            if (!tokens) {
+                console.error("توکن‌ها پیدا نشدند:", loginRes.data);
+                return;
+            }
+
+            const { access, refresh } = tokens;
+            localStorage.setItem("access", access);
+            localStorage.setItem("refresh", refresh);
+
             const payload = {
-                phoneNumber: phone || '',
-                nationalCode: nationalCode || '',
-                firstName: firstName || '',
-                lastName: lastName || '',
-                gender: gender || '',
-                birthDate: (year && month && day) ? `${year}-${month}-${day}` : "",
-                vehicleType: carType || '',
-                vehicleName: MycarName || '',
-                vehiclePlate: (twoDigitCode && letter && threeDigitCode)
-                    ? `${twoDigitCode} ${letter} ${threeDigitCode}`
-                    : '',
-                maritalStatus: maritalStatus || ``,
+                phoneNumber: phone || "09169767133",
+                nationalCode: nationalCode || "",
+                firstName: firstName || "",
+                lastName: lastName || "",
+                gender: gender || "",
+                birthDate: year && month && day ? `${year}-${month}-${day}` : "",
+                vehicleType: carType || "",
+                vehicleName: MycarName || "",
+                vehiclePlate:
+                    twoDigitCode && letter && threeDigitCode
+                        ? `${twoDigitCode} ${letter} ${threeDigitCode}`
+                        : "",
+                maritalStatus: maritalStatus || "",
                 hasChildren: true,
             };
-
+            console.log(phone)
             await axios.post(
                 "https://api.tda24.ir/api/core_admin/admin/drivers/",
                 payload,
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU2OTQxOTg3LCJpYXQiOjE3NTYzMzcxODcsImp0aSI6IjI2NGRkZWNmOGExMTQ4ZTA5MTBjMGVhYzI5YTFmNWE4IiwidXNlcl9pZCI6ImEzYWE1MThmLWI1NmQtNDJmZi1hYjI1LWM2OTVmNjQ3YzQ4MyJ9.79BEvgFj8CKlwEKixSQR48_Y8CuA69_l7j5fTUZ7pjE`,
+                        Authorization: `Bearer ${access}`,
                     },
                 }
             );
@@ -155,11 +173,13 @@ export function Contnet() {
             setTimeout(() => setShowModal(false), 10000);
 
         } catch (err) {
-            setModalMessage("خطا در ثبت درخواست");
+            console.error(err);
+            setModalMessage("خطا در ثبت درخواست یا لاگین");
             setShowModal(true);
             setTimeout(() => setShowModal(false), 10000);
         }
     };
+
     
     const handleAddressChange = (e) => {
         setAddress(e.target.value);
@@ -258,10 +278,10 @@ const handleProvinceBlur = () => {
     const toggleCategory = (index) => {
         if (categories[index] === "همه") {
             if (selectedCategories.length === categories.length) {
-                // همه انتخاب بودن → پاک کن
+                
                 setSelectedCategories([]);
             } else {
-                // همه انتخاب کن (همه آیتم‌ها + همه خودش)
+              
                 setSelectedCategories(categories.map((_, i) => i));
             }
         } else {
@@ -272,7 +292,6 @@ const handleProvinceBlur = () => {
                 updated = [...selectedCategories, index];
             }
 
-            // اگه همه انتخاب شدن، "همه" رو هم فعال کن
             if (
                 updated.length === categories.length - 1 &&
                 !updated.includes(categories.length - 1)
@@ -280,7 +299,7 @@ const handleProvinceBlur = () => {
                 updated = [...updated, categories.length - 1];
             }
 
-            // اگه یکی از گزینه‌ها لغو شد → "همه" هم لغو بشه
+          
             if (
                 updated.includes(categories.length - 1) &&
                 updated.length !== categories.length
@@ -294,10 +313,8 @@ const handleProvinceBlur = () => {
     const handleToggleCategory = (index) => {
         if (allCategories[index] === "همه") {
             if (activeCategories.length === allCategories.length) {
-                // همه انتخاب بودن → لغو همه
                 setActiveCategories([]);
             } else {
-                // همه انتخاب کن
                 setActiveCategories(allCategories.map((_, i) => i));
             }
         } else {
@@ -308,7 +325,7 @@ const handleProvinceBlur = () => {
                 updated = [...activeCategories, index];
             }
 
-            // اگه همه آیتم‌ها انتخاب شدن → "همه" رو هم فعال کن
+          
             if (
                 updated.length === allCategories.length - 1 &&
                 !updated.includes(allCategories.length - 1)
@@ -316,7 +333,6 @@ const handleProvinceBlur = () => {
                 updated = [...updated, allCategories.length - 1];
             }
 
-            // اگه یکی لغو شد → "همه" هم لغو بشه
             if (
                 updated.includes(allCategories.length - 1) &&
                 updated.length !== allCategories.length

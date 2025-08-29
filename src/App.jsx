@@ -1,24 +1,58 @@
-// App.jsx
-import { useState } from "react";
-import { Container } from "./components/Container";
-import { SideBar } from "./components/SideBar";
-import DriversManager from "./components/ManagerDrivers";
-import { BrowserRouter, Route, Routes } from "react-router";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Login } from "./components/Login";
 import { Contnet } from "./components/Content";
+import DriversManager from "./components/ManagerDrivers";
+import { ProtectedLayout } from "./components/ProtectedLayout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // بررسی اولیه توکن
+    const accessToken = localStorage.getItem("accessToken");
+    setIsAuthenticated(!!accessToken);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("phoneNumber");
+    localStorage.removeItem("userType");
+    setIsAuthenticated(false);
+    window.location.href = "/login";
+  };
 
   return (
     <BrowserRouter>
-      <div className="flex bg-[#f5f5f5] w-full">
-        <SideBar isOpen={sidebarOpen} />
-        <Container setSidebarOpen={setSidebarOpen}>
-          <Routes>
-            <Route path="/" element={<Contnet/>} />
-            <Route path="/drivers" element={<DriversManager/>} />
-          </Routes>
-        </Container>
-      </div>
+      <Routes>
+        <Route path="/login" element={<Login onLogin={() => setIsAuthenticated(true)} />} />
+
+        <Route element={<ProtectedRoute onLogout={handleLogout} />}>
+          <Route
+            element={
+              <ProtectedLayout
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                onLogout={handleLogout}
+              />
+            }
+          >
+            <Route path="/" element={<Contnet />} />
+            <Route path="/drivers" element={<DriversManager />} />
+          </Route>
+        </Route>
+
+        <Route
+          path="*"
+          element={
+            isAuthenticated ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }

@@ -7,7 +7,7 @@ export default function CustomInputNumber({
     setValue,
     error,
     setError,
-    type = "text",   // text | number | nationalCode
+    type = "text",   
     maxLength = 100,
 }) {
     return (
@@ -19,23 +19,19 @@ export default function CustomInputNumber({
                 onChange={(e) => {
                     let val = e.target.value;
 
-                    // فقط اعداد برای number و nationalCode
                     if (type === "number" || type === "nationalCode") {
                         val = val.replace(/\D/g, "").slice(0, maxLength);
                     }
 
                     setValue(val);
 
-                    // اگر چیزی وارد شد خطا پاک شه
                     if (val.trim() !== "") setError(false);
                 }}
                 onBlur={() => {
                     if (type === "nationalCode") {
-                        // دقیقا ۱۰ رقم و نباید با صفر شروع بشه
                         const isValid = /^[1-9][0-9]{9}$/.test(value);
                         setError(!isValid);
                     } else {
-                        // برای بقیه فقط چک کن خالی نباشه
                         setError(value.trim() === "");
                     }
                 }}

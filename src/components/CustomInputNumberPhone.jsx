@@ -47,7 +47,7 @@ export default function CustomInputNumberPhone({
                 name={name}
                 placeholder={placeholder}
                 type="text"
-                inputMode={mode === "text" ? "text" : "numeric"} // موبایل کیبورد عددی
+                inputMode={mode === "text" ? "text" : "numeric"}
                 pattern={mode === "text" ? undefined : "[0-9]*"}
                 value={value}
                 onChange={handleChange}

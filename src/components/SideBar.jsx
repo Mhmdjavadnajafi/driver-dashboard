@@ -23,7 +23,7 @@ export function SideBar({ isOpen }) {
                     <li key={idx} className="w-full flex justify-center">
                         <NavLink
                             to={item.path}
-                            end={item.path === "/"} // برای اینکه "/" فقط روی همون روت فعال بشه
+                            end={item.path === "/"} 
                             className={({ isActive }) =>
                                 `flex items-center h-[50px] mb-2 rounded-xl px-3 transition-all duration-300 ease-in-out
                 ${isOpen ? "justify-start w-[90%] gap-2" : "justify-center w-[60%]"}

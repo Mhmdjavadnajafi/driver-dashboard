@@ -1,6 +1,8 @@
 // components/Navbar.jsx
 import { CgMenuRight } from "react-icons/cg";
 import BigLogo from '../assets/images/BigLogo.png'
+import { FaUser } from "react-icons/fa";
+import { UserDropdown } from "./UserDropdown";
 
 export function Navbar({ setSidebarOpen }) {
     return (
@@ -13,9 +15,11 @@ export function Navbar({ setSidebarOpen }) {
                     >
                         <CgMenuRight className="text-[#B9A278] text-[30px]" />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-10">
+                        <UserDropdown/>
                         <img className="h-10 w-auto" src={BigLogo} alt="Logo" />
                     </div>
+                    
                 </nav>
             </div>
         </header>

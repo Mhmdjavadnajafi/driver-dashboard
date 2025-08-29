@@ -7,7 +7,7 @@ export default function SchoolServiceTypeRadio({ schoolService, serviceType, set
     ];
     useEffect(() => {
         if (schoolService !== "1") {
-            setServiceType(""); // یا می‌توانی 0 هم بزاری
+            setServiceType(""); 
         }
     }, [schoolService]);
 
