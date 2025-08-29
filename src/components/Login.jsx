@@ -56,7 +56,7 @@ export function Login({ onLogin }) {
     };
 
     return (
-        <div className="w-full h-screen bg-white relative flex flex-col items-center justify-center">
+        <div className="w-full vazir-medium  h-screen bg-white relative flex flex-col items-center justify-center">
             <img className="w-40 absolute top-4 right-4" src={Logo} alt="Logo" />
 
             <form className="flex flex-col items-center gap-4" onSubmit={handleSubmit}>
@@ -90,10 +90,10 @@ export function Login({ onLogin }) {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="h-12 w-[270px] bg-[#006ECF] text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition"
+                    className="h-12 w-[270px] bg-[#006ECF] vazir-medium  text-white font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition"
                 >
-                    {loading && <span className="animate-spin">⏳</span>}
                     {loading ? "در حال ورود.." : "ورود"}
+                    {loading && <span className="animate-spin">⏳</span>}
                 </button>
             </form>
         </div>
