@@ -1,0 +1,15 @@
+# فایل تنظیمات Netlify برای پروژه React + Vite + react-router-dom
+
+[build]
+  # دستور Build
+  command = "npm run build"
+  # پوشه خروجی که Netlify باید منتشر کنه
+  publish = "dist"
+
+[build.environment]
+  # نسخه Node که استفاده شود
+  NODE_VERSION = "22"
+
+# Optional: مسیر Base directory اگر پروژه داخل زیرپوشه بود
+# [build]
+#   base = "frontend"
