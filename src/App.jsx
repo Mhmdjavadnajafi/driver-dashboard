@@ -1,27 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Login } from "./components/Login";
-import { Contnet } from "./components/Content";
+import Content from "./components/Content";
 import DriversManager from "./components/ManagerDrivers";
 import { ProtectedLayout } from "./components/ProtectedLayout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    // بررسی اولیه توکن
-    const accessToken = localStorage.getItem("accessToken");
-    setIsAuthenticated(!!accessToken);
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // بررسی localStorage هنگام mount
+    return !!localStorage.getItem("encryptedTokens");
+  });
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("phoneNumber");
-    localStorage.removeItem("userType");
+    localStorage.removeItem("encryptedTokens");
     setIsAuthenticated(false);
     window.location.href = "/login";
   };
@@ -37,11 +30,10 @@ function App() {
               <ProtectedLayout
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
-                onLogout={handleLogout}
               />
             }
           >
-            <Route path="/" element={<Contnet />} />
+            <Route path="/" element={<Content />} />
             <Route path="/drivers" element={<DriversManager />} />
           </Route>
         </Route>

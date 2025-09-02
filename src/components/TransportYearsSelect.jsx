@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaChevronDown } from "react-icons/fa";
-import {useEffect} from 'react'
+
 export default function TransportYearsSelect({ transportHistory, transportYears, setTransportYears }) {
-    const disabled = transportHistory !== "has";
+    const disabled = !transportHistory;
     useEffect(() => {
-        if (transportHistory === "none") {
+        if (!transportHistory) {
             setTransportYears(0);
         }
-    }, [transportHistory]);
+    }, [transportHistory, setTransportYears]);
+
     return (
         <div className="col-span-12 sm:col-span-4 mt-4 h-[50px] relative">
             <label className="w-full relative">
@@ -16,7 +17,7 @@ export default function TransportYearsSelect({ transportHistory, transportYears,
                     onChange={(e) => setTransportYears(e.target.value)}
                     disabled={disabled}
                     className={`h-full w-full px-4 vazir-medium text-[#909090] border rounded-xl focus:outline-none appearance-none transition-all duration-300 ease-in-out
-            ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
+                        ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`}
                 >
                     <option value="">سابقه در سال</option>
                     {Array.from({ length: 5 }, (_, i) => (

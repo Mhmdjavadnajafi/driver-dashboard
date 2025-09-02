@@ -1,4 +1,3 @@
-// components/UserDropdown.jsx
 import { useState, useRef, useEffect } from "react";
 import { FaUser } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,7 +20,8 @@ export function UserDropdown({ onLogout }) {
     }, []);
 
     const handleLogout = () => {
-        setOpen(false);
+        localStorage.clear();
+        localStorage.setItem("logoutFlag", "true"); 
         if (onLogout) onLogout();
         navigate("/login", { replace: true });
     };
@@ -44,14 +44,10 @@ export function UserDropdown({ onLogout }) {
                         <motion.button
                             onClick={handleLogout}
                             className="w-full text-left px-4 py-3 vazir-medium cursor-pointer text-sm font-semibold text-red-600 flex items-center gap-2"
-                            whileHover={{ scale: 1.05, backgroundColor: "#ffe5e5" }} 
-                            whileTap={{ scale: 0.95 }} 
-                            initial={{ opacity: 0, y: -10 }} 
-                            animate={{ opacity: 1, y: 0 }} 
-                            transition={{ duration: 0.3 }}
+                            whileHover={{ scale: 1.05, backgroundColor: "#ffe5e5" }}
+                            whileTap={{ scale: 0.95 }}
                         >
-                            خروج از حساب
-                            <CgLogOut />
+                            خروج از حساب <CgLogOut />
                         </motion.button>
                     </motion.div>
                 )}

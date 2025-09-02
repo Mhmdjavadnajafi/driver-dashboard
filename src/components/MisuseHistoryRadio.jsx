@@ -2,8 +2,8 @@ import React from "react";
 
 export default function MisuseHistoryRadio({ misuseHistory, setMisuseHistory }) {
     const options = [
-        { value: "no", label: "ندارد" },
-        { value: "yes", label: "دارد" }
+        { value: true, label: "ندارد" },
+        { value: false, label: "دارد" }
     ];
 
     return (

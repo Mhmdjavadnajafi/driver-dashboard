@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion,AnimatePresence} from "framer-motion";
 import axios from "axios";
+import { decryptData } from "./tokenStorage.js";
 import { FaChevronDown } from "react-icons/fa6";
 import { provinces, cities } from "../assets/satae2";
 import MAP from "./Map";
@@ -34,14 +35,13 @@ import SelectableAllCategories from "./SelectableAllCategories";
 import ValidatedInput from "./ValidatedInput";
 import FancyAlert from "./Fancyalert.jsx";
 import CustomInputBoxCarName from "./carName.jsx";
-localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU2OTM4ODQ4LCJpYXQiOjE3NTYzMzQwNDgsImp0aSI6ImZkNWQ5NDM0MjcwMjQ2ZDZiNDNhYjI5NjEzOWE1MDk5IiwidXNlcl9pZCI6ImEzYWE1MThmLWI1NmQtNDJmZi1hYjI1LWM2OTVmNjQ3YzQ4MyJ9.l-e8HlIdw9qRAe2zQVmFgLMWiWCjrkVoAYJ31tphCZU");
-localStorage.setItem("refreshToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1NjkzODg0OCwiaWF0IjoxNzU2MzM0MDQ4LCJqdGkiOiIyMDQ1ODVkZTM5MmI0YTdiOGY4NTExNjljYmQ2MDc2ZCIsInVzZXJfaWQiOiJhM2FhNTE4Zi1iNTZkLTQyZmYtYWIyNS1jNjk1ZjY0N2M0ODMifQ.TvbRjlZuhJ7YDRaQv8vjfrt957NirZIIn7-2r1SmNOo");
+import {  ModalMessgae } from "./ModalMessgae.jsx";
 const citiesByProvince = provinces.reduce((acc, province) => {
     acc[province.id] = cities.filter(city => city.province_id === province.id);
     return acc;
 }, {});
 
-export function Contnet() {
+export default function Contnet() {
     const [gender, setGender] = useState("");
     const [day, setDay] = useState("");
     const [month, setMonth] = useState("");
@@ -120,150 +120,124 @@ export function Contnet() {
     const [errorConfirm, setErrorConfirm] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState("");
+    const [modalType, setModalType] = useState("success");
+    useEffect(() => {
+        const cities = selectedProvince ? citiesByProvince[selectedProvince.id] || [] : [];
+        setCityList(cities);
+        const defaultCity = cities.find(city => city.name === "خرم آباد");
+        setSelectedCity(defaultCity || null);
+    }, [selectedProvince]);
+    const toggleDay = (day) => {
+        setSelectedDays(prev =>
+            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
+        );
+    };
+    const toggleSelect = (index) => {
+        if (initialDocs[index].name === "همه") {
+            if (selected.length === initialDocs.length) {
+                setSelected([]);
+            } else {
+                setSelected(initialDocs.map((_, i) => i));
+            }
+        } else {
+            let updated;
+            if (selected.includes(index)) {
+                updated = selected.filter((i) => i !== index);
+            } else {
+                updated = [...selected, index];
+            }
 
+            if (
+                updated.length === initialDocs.length - 1 &&
+                !updated.includes(initialDocs.length - 1)
+            ) {
+                updated = [...updated, initialDocs.length - 1];
+            }
+
+            if (
+                updated.includes(initialDocs.length - 1) &&
+                updated.length !== initialDocs.length
+            ) {
+                updated = updated.filter((i) => i !== initialDocs.length - 1);
+            }
+
+            setSelected(updated);
+        }
+    };
     const handleSave = async (e) => {
         e.preventDefault();
 
         try {
-            const loginRes = await axios.post("https://api.tda24.ir/api/users_aslii/login/", {
-                phoneNumber: "09216919291",
-                password: "Aa00100",
-            });
-
-            const tokens = loginRes.data.data?.tokens;
-            if (!tokens) {
-                console.error("توکن‌ها پیدا نشدند:", loginRes.data);
-                return;
-            }
-
-            const { access, refresh } = tokens;
-            localStorage.setItem("access", access);
-            localStorage.setItem("refresh", refresh);
+            const tokens = decryptData(localStorage.getItem("encryptedTokens"));
+            if (!tokens?.accessToken) throw new Error("توکن موجود نیست");
 
             const payload = {
-                phoneNumber: phone || "09169767133",
-                nationalCode: nationalCode || "",
-                firstName: firstName || "",
-                lastName: lastName || "",
-                gender: gender || "",
-                birthDate: year && month && day ? `${year}-${month}-${day}` : "",
-                vehicleType: carType || "",
+                firstName,
+                lastName,
+                gender,
+                birthDate:`${year}-${month}-${day}`,
+                maritalStatus,
+                hasChildren: Number(sons) + Number(daughters) > 0,
+                numSons: Number(sons),
+                numDaughters: Number(daughters),
+                vehicleType: carType || "سواری",
                 vehicleName: MycarName || "",
-                vehiclePlate:
-                    twoDigitCode && letter && threeDigitCode
-                        ? `${twoDigitCode} ${letter} ${threeDigitCode}`
-                        : "",
-                maritalStatus: maritalStatus || "",
-                hasChildren: true,
+                vehiclePlate: twoDigitCode && letter && threeDigitCode && provinceCode ? `${twoDigitCode}${letter}${threeDigitCode} ${provinceCode}` : "",
+                hasTransportExperience: transportHistory ?? false,
+                transportExperienceDescription: transportHistory ? `دارای ${transportYears} سال سابقه کاری` : "",
+                passengerType,
+                serviceCount: schoolService?.toString() || "1",
+                serviceTime: schoolService === 2 ? "صبح و عصر" : serviceType || "",
+                substanceUseHistory: misuseHistory ?? false,
+                workDays: selectedDays?.length > 0 ? selectedDays : ["شنبه"],
+                homeLocation: { latitude: 33.4878, longitude: 48.3558, province: "", city: "", district: "", description: "" },
+                serviceLocations: [
+                    { latitude: 33.49, longitude: 48.36, province: "", city: "", district: "", description: "" },
+                    { latitude: 33.495, longitude: 48.37, province: "", city: "", district: "", description: "" },
+                    { latitude: 33.48, longitude: 48.35, province: "", city: "", district: "", description: "" }
+                ],
+                phoneNumber: phone,
+                nationalCode,
+                isActive: true
             };
-            console.log(phone)
+
+
             await axios.post(
                 "https://api.tda24.ir/api/core_admin/admin/drivers/",
                 payload,
                 {
+                    withCredentials: true,
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${access}`,
+                        Authorization: `Bearer ${tokens.accessToken}`,
                     },
                 }
             );
+            console.log(payload)
 
             setModalMessage("درخواست با موفقیت ثبت شد!");
             setShowModal(true);
             setTimeout(() => setShowModal(false), 10000);
+            setPhone(""); setNationalCode(""); setFirstName(""); setLastName(""); setGender("");
+            setYear(""); setMonth(""); setDay(""); setCarType(""); setCarName("");
+            setTwoDigitCode(""); setLetter(""); setThreeDigitCode(""); setMaritalStatus("");
+            setSons(""); setDaughters(""); setTransportHistory(false); setTransportYears(0);
+            setPassengerType(""); setSchoolService(""); setServiceType(""); setMisuseHistory(false);
+            setSelectedDays([]);
 
         } catch (err) {
             console.error(err);
-            setModalMessage("خطا در ثبت درخواست یا لاگین");
+            if (err.response?.status === 401) {
+                setModalMessage("اعتبار توکن تمام شده، دوباره وارد شوید.");
+            } else {
+                setModalMessage("خطا در ثبت درخواست یا اعتبارسنجی توکن");
+            }
             setShowModal(true);
             setTimeout(() => setShowModal(false), 10000);
         }
     };
 
-    
-    const handleAddressChange = (e) => {
-        setAddress(e.target.value);
-        if (e.target.value.trim() !== "") setErrorAddress(false);
-    };
 
-    // هندل blur
-    const handleAddressBlur = () => {
-        setErrorAddress(address.trim() === "");
-    };
-    const handleCityChange = (e) => {
-        const city = cityList.find((c) => c.id === parseInt(e.target.value));
-        setSelectedCity(city || null);
-        setErrorCity(!city); // اگر خالی بود، خطا فعال شود
-    };
-
-    // هندل blur برای شهر
-    const handleCityBlur = () => {
-        setErrorCity(!selectedCity);
-    };
-    const handleProvinceChange = (e) => {
-  const prov = provinces.find((p) => p.id === parseInt(e.target.value));
-  setSelectedProvince(prov || null);
-  setErrorProvince(!prov); // اگر خالی بود، خطا فعال شود
-};
-
-// هندل blur برای استان
-const handleProvinceBlur = () => {
-  setErrorProvince(!selectedProvince); // اگر خالی بود، خطا فعال شود
-};
-    const handleTwoDigitBlur = () => {
-        if (selectedTwoDigit === "") {
-            setErrorTwoDigit(true);
-        } else {
-            setErrorTwoDigit(false);
-        }
-    };
-
-    const handleThreeDigitBlur = () => {
-        // خالی بودن، صفر داخلش بودن یا بیشتر از 3 رقم
-        if (
-            threeDigitCode === "" ||
-            /0/.test(threeDigitCode) ||
-            threeDigitCode.length > 3
-        ) {
-            setErrorThreeDigit(true);
-        } else {
-            setErrorThreeDigit(false);
-        }
-    };
-
-    const handleThreeDigitChange = (e) => {
-        // فقط اعداد و حداکثر 3 رقم
-        const value = e.target.value.replace(/\D/g, "").slice(0, 3);
-        setThreeDigitCode(value);
-    };
-    const handleSonsBlur = () => setErrorSons(sons === "");
-    const handleDaughtersBlur = () => setErrorDaughters(daughters === "");
-    const handleMonthBlur = () => {
-        setErrorMonthField(month === "");
-    };
-    const handleDayBlur = () => {
-        if (day === "") {
-            setErrorDayField(true);
-        } else {
-            setErrorDayField(false);
-        }
-    };
-    const handleYearBlur = () => setErrorYear(year === "");
-
-    const handlePhoneChange = (e) => {
-        const value = e.target.value.replace(/\D/g, "").slice(0, 11); // فقط اعداد و حداکثر 11 رقم
-        setPhone(value);
-    };
-    const handlePhoneBlur = () => {
-        setErrorPhone(phone.length !== 11); // اگر کمتر یا بیشتر بود، خطا
-    };
-    const handleNationalCodeChange = (e) => {
-        const value = e.target.value.replace(/\D/g, "").slice(0, 10);
-        setNationalCode(value);
-    };
-    const handleNationalCodeBlur = () => {
-        setErrorNationalCode(nationalCode.length !== 10);
-    };
     const handleBlur = (value, setError) => {
         setError(value.trim() === "");
     };
@@ -387,252 +361,222 @@ const handleProvinceBlur = () => {
         "بخش 8",
         "همه",
     ];
-    useEffect(() => {
-        const cities = selectedProvince ? citiesByProvince[selectedProvince.id] || [] : [];
-        setCityList(cities);
-        const defaultCity = cities.find(city => city.name === "خرم آباد");
-        setSelectedCity(defaultCity || null);
-    }, [selectedProvince]);
-    const toggleDay = (day) =>
-        setSelectedDays(prev =>
-            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-        );
-    const toggleSelect = (index) => {
-        if (initialDocs[index].name === "همه") {
-            if (selected.length === initialDocs.length) {
-                setSelected([]);
-            } else {
-                setSelected(initialDocs.map((_, i) => i));
-            }
-        } else {
-            let updated;
-            if (selected.includes(index)) {
-                updated = selected.filter((i) => i !== index);
-            } else {
-                updated = [...selected, index];
-            }
-
-            if (
-                updated.length === initialDocs.length - 1 &&
-                !updated.includes(initialDocs.length - 1)
-            ) {
-                updated = [...updated, initialDocs.length - 1];
-            }
-
-            if (
-                updated.includes(initialDocs.length - 1) &&
-                updated.length !== initialDocs.length
-            ) {
-                updated = updated.filter((i) => i !== initialDocs.length - 1);
-            }
-
-            setSelected(updated);
-        }
-    };
+   
     return (
         <div className="flex-1 h-full py-3 mt-5 px-5">
             <div className="vazir-light text-[#676767] font-bold text-[14px]">ایجاد کاربر راننده</div>
-            <form className="w-[100%] px-5 mt-10 mx-auto">
-                <div className="form-title vazir-light text-[#676767] font-bold text-[14px]">اطلاعات پایه</div>
-                <div className="grid grid-cols-12 gap-4 mt-5">
-                    <CustomInput
-                        value={firstName}
-                        setValue={setFirstName}
-                        error={errorFirst}
-                        setError={setErrorFirst}
-                        placeholder="نام"
-                    />
+            <form className="w-[100%] mt-10 mx-auto rounded-xl">
+                <div className="grid grid-cols-12 gap-4 my-4">
+                    <div className="col-span-12 gap-3 py-5 grid grid-cols-12 bg-white p-3 rounded-xl">
+                        <div className="col-span-12 my-4">
+                            <div className="vazir-light text-[#676767] font-bold text-[14px]">اطلاعات پایه</div>
+                        </div>
+                        <CustomInput
+                            value={firstName}
+                            setValue={setFirstName}
+                            error={errorFirst}
+                            setError={setErrorFirst}
+                            placeholder="نام"
+                        />
 
-                    <CustomInput
-                        value={lastName}
-                        setValue={setLastName}
-                        error={errorLast}
-                        setError={setErrorLast}
-                        placeholder="نام خانوادگی"
-                    />
+                        <CustomInput
+                            value={lastName}
+                            setValue={setLastName}
+                            error={errorLast}
+                            setError={setErrorLast}
+                            placeholder="نام خانوادگی"
+                        />
 
-                    <CustomRadioGroup
-                        label="جنسیت"
-                        name="gender"
-                        value={gender}            
-                        setValue={setGender}     
-                        options={[
-                            { value: "male", label: "آقا" },
-                            { value: "female", label: "خانم" },
-                        ]}
-                    />
+                        <CustomRadioGroup
+                            label="جنسیت"
+                            name="gender"
+                            value={gender}
+                            setValue={setGender}
+                            options={[
+                                { value: "male", label: "آقا" },
+                                { value: "female", label: "خانم" },
+                            ]}
+                        />
 
-                    <CustomInputNumber
-                        placeholder="کد ملی"
-                        value={nationalCode}
-                        setValue={setNationalCode}
-                        error={errorNationalCode}
-                        setError={setErrorNationalCode}
-                        type="nationalCode"
-                        maxLength={10}
-                    />
+                        <CustomInputNumber
+                            placeholder="کد ملی"
+                            value={nationalCode}
+                            setValue={setNationalCode}
+                            error={errorNationalCode}
+                            setError={setErrorNationalCode}
+                            type="nationalCode"
+                            maxLength={10}
+                        />
 
 
-                    <CustomInputNumberPhone
-                        placeholder="شماره همراه"
-                        value={phone}
-                        setValue={setPhone}
-                        error={errorPhone}
-                        setError={setErrorPhone}
-                        mode="phone" 
-                    />
-                    <CustomDateSelect
-                        day={day}
-                        setDay={setDay}
-                        month={month}
-                        setMonth={setMonth}
-                        year={year}
-                        setYear={setYear}
-                        errorDay={errorDayField}
-                        setErrorDay={setErrorDayField}
-                        errorMonth={errorMonthField}
-                        setErrorMonth={setErrorMonthField}
-                        errorYear={errorYear}
-                        setErrorYear={setErrorYear}
-                    />
+                        <CustomInputNumberPhone
+                            placeholder="شماره همراه"
+                            value={phone}
+                            setValue={setPhone}
+                            error={errorPhone}
+                            setError={setErrorPhone}
+                            mode="phone"
+                        />
+                        <CustomDateSelect
+                            day={day}
+                            setDay={setDay}
+                            month={month}
+                            setMonth={setMonth}
+                            year={year}
+                            setYear={setYear}
+                            errorDay={errorDayField}
+                            setErrorDay={setErrorDayField}
+                            errorMonth={errorMonthField}
+                            setErrorMonth={setErrorMonthField}
+                            errorYear={errorYear}
+                            setErrorYear={setErrorYear}
+                        />
 
-                    <CustomRadioGroup
-                        label="وضعیت تأهل"
-                        name="maritalStatus"
-                        value={maritalStatus}
-                        setValue={setMaritalStatus}
-                        options={[
-                            { value: "single", label: "مجرد" },
-                            { value: "married", label: "متأهل" },
-                        ]}
-                    />
-                    <CustomInputBoxNumber
-                        placeholder="فرزند دختر"
-                        value={daughters}
-                        setValue={setDaughters}
-                        error={errorDaughters}
-                        setError={setErrorDaughters}
-                        max={10}
-                        min={0}
-                    />
-                    <CustomInputBoxNumber
-                        placeholder="فرزند پسر"
-                        value={sons}
-                        setValue={setSons}
-                        error={errorSons}
-                        setError={setErrorSons}
-                        max={10}
-                        min={0}
-                    />
-                    <CustomInputBoxCarName value={MycarName} setValue={setCarName} placeholder="نام خودرو" />
+                        <CustomRadioGroup
+                            label="وضعیت تأهل"
+                            name="maritalStatus"
+                            value={maritalStatus}
+                            setValue={setMaritalStatus}
+                            options={[
+                                { value: "single", label: "مجرد" },
+                                { value: "married", label: "متأهل" },
+                            ]}
+                        />
+                        <CustomInputBoxNumber
+                            placeholder="فرزند دختر"
+                            value={daughters}
+                            setValue={setDaughters}
+                            error={errorDaughters}
+                            setError={setErrorDaughters}
+                            max={10}
+                            min={0}
+                        />
+                        <CustomInputBoxNumber
+                            placeholder="فرزند پسر"
+                            value={sons}
+                            setValue={setSons}
+                            error={errorSons}
+                            setError={setErrorSons}
+                            max={10}
+                            min={0}
+                        />
+                        <CustomInputBoxCarName value={MycarName} setValue={setCarName} placeholder="نام خودرو" />
 
-                    <CustomCarType carType={carType} setCarType={setCarType} />
-                    <CarPlateInput
-                        provinceCode={provinceCode} setProvinceCode={setProvinceCode} errorProvince={errorProvince} setErrorProvince={setErrorProvince}
-                        threeDigitCode={threeDigitCode} setThreeDigitCode={setThreeDigitCode} errorThreeDigit={errorThreeDigit} setErrorThreeDigit={setErrorThreeDigit}
-                        letter={letter} setLetter={setLetter} letters={letters}
-                        twoDigitCode={twoDigitCode} setTwoDigitCode={setTwoDigitCode} errorTwoDigit={errorTwoDigit} setErrorTwoDigit={setErrorTwoDigit}
-                    />
+                        <CustomCarType carType={carType} setCarType={setCarType} />
+                        <CarPlateInput
+                            provinceCode={provinceCode} setProvinceCode={setProvinceCode} errorProvince={errorProvince} setErrorProvince={setErrorProvince}
+                            threeDigitCode={threeDigitCode} setThreeDigitCode={setThreeDigitCode} errorThreeDigit={errorThreeDigit} setErrorThreeDigit={setErrorThreeDigit}
+                            letter={letter} setLetter={setLetter} letters={letters}
+                            twoDigitCode={twoDigitCode} setTwoDigitCode={setTwoDigitCode} errorTwoDigit={errorTwoDigit} setErrorTwoDigit={setErrorTwoDigit}
+                        />
 
-                    <TransportHistoryRadio
-                        transportHistory={transportHistory}
-                        setTransportHistory={setTransportHistory}
-                    />
-                    <TransportYearsSelect
-                        transportHistory={transportHistory}
-                        transportYears={transportYears}
-                        setTransportYears={setTransportYears}
-                    />
-                    <PassengerTypeRadio
-                        passengerType={passengerType}
-                        setPassengerType={setPassengerType}
-                    />
+                        <TransportHistoryRadio
+                            transportHistory={transportHistory}
+                            setTransportHistory={setTransportHistory}
+                        />
+                        <TransportYearsSelect
+                            transportHistory={transportHistory}
+                            transportYears={transportYears}
+                            setTransportYears={setTransportYears}
+                        />
+                        <PassengerTypeRadio
+                            passengerType={passengerType}
+                            setPassengerType={setPassengerType}
+                        />
 
-                    {/* تعداد سرویس مدرسه */}
-                    <SchoolServiceRadio
-                        schoolService={schoolService}
-                        setSchoolService={setSchoolService}
-                    />
-                    {/* نوع سرویس مدرسه */}
-                    <SchoolServiceTypeRadio
-                        schoolService={schoolService}
-                        serviceType={serviceType}
-                        setServiceType={setServiceType}
-                    />
-                    <MisuseHistoryRadio
-                        misuseHistory={misuseHistory}
-                        setMisuseHistory={setMisuseHistory}
-                    />
-                    <WorkDaysCheckbox
-                        daysOfWeek={daysOfWeek}
-                        selectedDays={selectedDays}
-                        toggleDay={toggleDay}
-                    />
+                        <SchoolServiceRadio
+                            schoolService={schoolService}
+                            setSchoolService={setSchoolService}
+                        />
+                        <SchoolServiceTypeRadio
+                            schoolService={schoolService}
+                            serviceType={serviceType}
+                            setServiceType={setServiceType}
+                        />
+                        <MisuseHistoryRadio
+                            misuseHistory={misuseHistory}
+                            setMisuseHistory={setMisuseHistory}
+                        />
+                        <WorkDaysCheckbox
+                            daysOfWeek={daysOfWeek}
+                            selectedDays={selectedDays}
+                            toggleDay={toggleDay}
+                        />
+                 </div>
+                    <div className="col-span-12 gap-3 mt-10 py-5 grid grid-cols-12 bg-white p-3 rounded-xl py-10">
+                        <div className="col-span-12 mt-5 vazir-light text-[#676767] font-bold text-[14px] gap-4 ">
+                            اطلاعات محل سکونت راننده
+                        </div>
+                        <div className="col-span-12 md:col-span-4 h-auto grid grid-cols-12 gap-4">
+                            {/* انتخاب استان */}
+                            <ProvinceSelect
+                                provinces={provinces}
+                                selectedProvince={selectedProvince}
+                                setSelectedProvince={setSelectedProvince}
+                                errorProvince={errorProvince}
+                            />
 
-                    <div className="col-span-12 mt-12 vazir-light text-[#676767] font-bold text-[14px] gap-4 ">
-                        اطلاعات محل سکونت راننده
+                            <CitySelect
+                                selectedProvince={selectedProvince}
+                                cityList={cityList}
+                                selectedCity={selectedCity}
+                                setSelectedCity={setSelectedCity}
+                                errorCity={errorCity}
+                            />
+
+                            <AddressTextarea
+                                address={address}
+                                setAddress={setAddress}
+                                errorAddress={errorAddress}
+                                setErrorAddress={setErrorAddress}
+                            />
+
+
+                            <FloorUnitInput
+                                floor={floor}
+                                setFloor={setFloor}
+                                errorFloor={errorFloor}
+                                setErrorFloor={setErrorFloor}
+                                unit={unit}
+                                setUnit={setUnit}
+                                errorUnit={errorUnit}
+                                setErrorUnit={setErrorUnit}
+                            />
+
+
+                        </div>
+                        <div className="col-span-12 md:col-span-8 h-[400px] mt-4 md:mt-0">
+                            <MAP />
+                        </div>
                     </div>
-                    <div className="col-span-12 md:col-span-4 h-auto grid grid-cols-12 gap-4">
-                        {/* انتخاب استان */}
-                        <ProvinceSelect
-                            provinces={provinces}
-                            selectedProvince={selectedProvince}
-                            setSelectedProvince={setSelectedProvince}
-                            errorProvince={errorProvince}
-                        />
-
-                        <CitySelect
-                            selectedProvince={selectedProvince}
-                            cityList={cityList}
-                            selectedCity={selectedCity}
-                            setSelectedCity={setSelectedCity}
-                            errorCity={errorCity}
-                        />
-
-                        <AddressTextarea
-                            address={address}
-                            setAddress={setAddress}
-                            errorAddress={errorAddress}
-                            setErrorAddress={setErrorAddress}
-                        />
-
-
-                        <FloorUnitInput
-                            floor={floor}
-                            setFloor={setFloor}
-                            errorFloor={errorFloor}
-                            setErrorFloor={setErrorFloor} 
-                            unit={unit}
-                            setUnit={setUnit}
-                            errorUnit={errorUnit}
-                            setErrorUnit={setErrorUnit}    
-                        />
-
-
+                    <div className="col-span-12 gap-3 mt-10 py-5 grid grid-cols-12 bg-white p-3 rounded-xl py-10">
+                        <div className="col-span-12 mb-5 vazir-light text-[#676767] font-bold text-[14px] gap-4">مدارک هویتی</div>
+                        <DocumentGrid docs={docs} />
                     </div>
-                    <div className="col-span-12 md:col-span-8 h-[400px] mt-4 md:mt-0">
-                        <MAP />
+                    <div className="col-span-12 gap-3 mt-10 py-5 grid grid-cols-12 bg-white p-3 rounded-xl py-10">
+                        <div className="col-span-12 mb-5 vazir-light text-[#676767] font-bold text-[14px] gap-4">ارائه خدمات در</div>
+                        <SelectableService
+                            docs={initialDocs}
+                            selected={selected}
+                            toggleSelect={toggleSelect}
+                        />
                     </div>
-                    <div className="col-span-12 mt-12 vazir-light text-[#676767] font-bold text-[14px] gap-4">مدارک هویتی</div>
-                    <DocumentGrid docs={docs} />
-                    <div className="col-span-12 mt-12 vazir-light text-[#676767] font-bold text-[14px] gap-4">ارائه خدمات در</div>
-                    <SelectableService
-                        docs={initialDocs}
-                        selected={selected}
-                        toggleSelect={toggleSelect}
-                    />
-                    <div className="col-span-12 mt-12 vazir-light text-[#676767] font-bold text-[14px] gap-4">دریافت خدمات</div>
-                    <SelectableCategories
-                        categories={categories}
-                        selectedCategories={selectedCategories}
-                        toggleCategory={toggleCategory}
-                    />
-                    <div className="col-span-12 mt-12 vazir-light text-[#676767] font-bold text-[14px] gap-4">تمایل حمل و نقل در بخش</div>
-                    <SelectableAllCategories
-                        allCategories={allCategories}
-                        activeCategories={activeCategories}
-                        handleToggleCategory={handleToggleCategory}
-                    />
+                    <div className="col-span-12 gap-3 mt-10 py-5 grid grid-cols-12 bg-white p-3 rounded-xl py-10">
+                        <div className="col-span-12 mb-5 vazir-light text-[#676767] font-bold text-[14px] gap-4">دریافت خدمات</div>
+                        <SelectableCategories
+                            categories={categories}
+                            selectedCategories={selectedCategories}
+                            toggleCategory={toggleCategory}
+                        />
+                   </div>
+                    <div className="col-span-12 gap-3 mt-10 py-5 grid grid-cols-12 bg-white p-3 rounded-xl py-10">
+                        <div className="col-span-12 mb-5 vazir-light text-[#676767] font-bold text-[14px] gap-4">تمایل حمل و نقل در بخش</div>
+                        <SelectableAllCategories
+                            allCategories={allCategories}
+                            activeCategories={activeCategories}
+                            handleToggleCategory={handleToggleCategory}
+                        />
+                   </div>
                     
                     <div className="col-span-12 mt-12 vazir-light text-[#676767] font-bold text-[14px] gap-4"></div>
                     {/* فیلد رمز عبور */}
@@ -670,14 +614,13 @@ const handleProvinceBlur = () => {
                         >
                             ذخیره اطلاعات
                         </motion.button>
-                        {showModal && (
-                            <div className="modal-overlay">
-                                <div className={`modal-box ${modalMessage.includes("موفقیت") ? "success" : "error"}`}>
-                                    <div className="modal-message">{modalMessage}</div>
-                                    <div className="modal-progress"></div>
-                                </div>
-                            </div>
-                        )}
+                       <ModalMessgae 
+                            show={showModal}
+                            type={modalType} 
+                            message={modalMessage}
+                            onClose={() => setShowModal(false)}
+                            autoClose={10000} 
+                        />
                     </div>
                     </div>
             </form>

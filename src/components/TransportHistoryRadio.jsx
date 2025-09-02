@@ -2,8 +2,8 @@ import React from "react";
 
 export default function TransportHistoryRadio({ transportHistory, setTransportHistory }) {
     const options = [
-        { value: "has", label: "دارد" },
-        { value: "none", label: "ندارد" }
+        { value: true, label: "دارد" },
+        { value: false, label: "ندارد" }
     ];
 
     return (

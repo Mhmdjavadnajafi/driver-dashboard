@@ -11,12 +11,10 @@ export default function CarPlateInput({
     const handleNumberChange = (setter, maxLength, value, errorSetter) => {
         let val = value.replace(/\D/g, "").slice(0, maxLength);
         setter(val);
-        // بررسی اعتبار هنگام تایپ
         if (val !== "") errorSetter(false);
     };
 
     const handleNumberBlur = (val, setter, errorSetter, min = 1, max = 99, length = null) => {
-        // بررسی اینکه مقدار خالی نباشه، طول درست باشه، داخل محدوده باشه و صفر نداشته باشه
         const hasZero = val.includes("0");
         const isValid = val !== "" &&
             (!length || val.length === length) &&
@@ -81,7 +79,6 @@ export default function CarPlateInput({
                 </label>
             </div>
 
-            {/* دو رقم آخر */}
             <div className="col-span-6 sm:col-span-3 h-[50px] relative">
                 <label className="w-full relative">
                     <input

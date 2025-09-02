@@ -1,50 +1,54 @@
 import { Navigate, Outlet } from "react-router-dom";
-import axios from "axios";
 import { useState, useEffect } from "react";
+import axios from "axios";
 import LoadingScreen from "./LoadingScreen";
+import { decryptData, encryptData } from "./tokenStorage.js";
 
 export function ProtectedRoute({ onLogout }) {
     const [loading, setLoading] = useState(true);
     const [authenticated, setAuthenticated] = useState(false);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const accessToken = localStorage.getItem("accessToken");
-            const refreshToken = localStorage.getItem("refreshToken");
+        let isMounted = true;
 
-            if (!accessToken && !refreshToken) {
+        const checkAuth = async () => {
+            const tokens = decryptData(localStorage.getItem("encryptedTokens"));
+            const logoutFlag = localStorage.getItem("logoutFlag");
+
+            if (logoutFlag || !tokens) {
                 setAuthenticated(false);
                 setLoading(false);
                 return;
             }
 
-            if (!accessToken && refreshToken) {
-                try {
+            try {
+                // refresh token اگر نیاز است
+                if (!tokens.accessToken && tokens.refreshToken) {
                     const res = await axios.post(
                         "https://api.tda24.ir/api/users_aslii/refresh/",
-                        { refreshToken },
+                        { refreshToken: tokens.refreshToken },
                         { headers: { "Content-Type": "application/json" } }
                     );
-                    localStorage.setItem("accessToken", res.data.access);
-                    setAuthenticated(true);
-                } catch (err) {
-                    console.error("رفرش توکن ناموفق:", err);
-                    onLogout();
-                    setAuthenticated(false);
-                } finally {
-                    setLoading(false);
+                    tokens.accessToken = res.data.access;
+                    localStorage.setItem("encryptedTokens", encryptData(tokens));
                 }
-            } else {
-                setAuthenticated(true);
-                setLoading(false);
+
+                if (isMounted) setAuthenticated(true);
+            } catch (err) {
+                localStorage.removeItem("encryptedTokens");
+                localStorage.setItem("logoutFlag", "true");
+                if (onLogout) onLogout();
+                if (isMounted) setAuthenticated(false);
+            } finally {
+                if (isMounted) setLoading(false);
             }
         };
 
         checkAuth();
+        return () => { isMounted = false; };
     }, [onLogout]);
 
     if (loading) return <LoadingScreen />;
     if (!authenticated) return <Navigate to="/login" replace />;
-
     return <Outlet />;
 }

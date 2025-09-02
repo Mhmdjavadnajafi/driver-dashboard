@@ -5,12 +5,12 @@ export default function AddressTextarea({ address, setAddress, errorAddress, set
 
     const handleChange = (e) => {
         setAddress(e.target.value);
-        if (e.target.value.trim() !== "") setErrorAddress(false); // پاک کردن ارور هنگام تایپ
+        if (e.target.value.trim() !== "") setErrorAddress(false); 
     };
 
     const handleBlur = () => {
         setAddress(address.trim());
-        if (address.trim() === "") setErrorAddress(true); // اگر خالی بود، ارور بده
+        if (address.trim() === "") setErrorAddress(true); 
     };
 
     return (

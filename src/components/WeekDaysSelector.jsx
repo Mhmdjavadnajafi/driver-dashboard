@@ -1,21 +1,12 @@
-import React, { useState } from "react";
-
-export default function WorkDaysCheckbox({ daysOfWeek }) {
-    const [selectedDays, setSelectedDays] = useState([]);
+export default function WorkDaysCheckbox({ daysOfWeek, selectedDays, toggleDay }) {
 
     const toggleAllDays = () => {
         if (selectedDays.length === daysOfWeek.length) {
-            setSelectedDays([]);
+            daysOfWeek.forEach(day => toggleDay(day)); 
         } else {
-            setSelectedDays([...daysOfWeek]);
-        }
-    };
-
-    const toggleDay = (day) => {
-        if (selectedDays.includes(day)) {
-            setSelectedDays(selectedDays.filter((d) => d !== day));
-        } else {
-            setSelectedDays([...selectedDays, day]);
+            daysOfWeek.forEach(day => {
+                if (!selectedDays.includes(day)) toggleDay(day);
+            });
         }
     };
 
@@ -31,11 +22,11 @@ export default function WorkDaysCheckbox({ daysOfWeek }) {
                         type="checkbox"
                         checked={selectedDays.includes(day)}
                         onChange={() => toggleDay(day)}
-                        className="absolute opacity-0 w-0 h-0"
+                        className="absolute w-0 h-0"
                     />
                     <span
                         className={`w-6 h-6 rounded-full flex items-center justify-center border border-white transition-all duration-300
-              ${selectedDays.includes(day) ? "bg-blue-500 shadow-md" : "bg-white hover:bg-gray-100"}`}
+                          ${selectedDays.includes(day) ? "bg-blue-500 shadow-md" : "bg-gray-300 hover:bg-gray-500"}`}
                     >
                         {selectedDays.includes(day) && (
                             <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
@@ -45,7 +36,6 @@ export default function WorkDaysCheckbox({ daysOfWeek }) {
                 </label>
             ))}
 
-            {/* چک‌باکس "همه" */}
             <label className="flex flex-col items-center cursor-pointer relative">
                 <input
                     type="checkbox"
@@ -55,7 +45,7 @@ export default function WorkDaysCheckbox({ daysOfWeek }) {
                 />
                 <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center border border-white transition-all duration-300
-            ${allChecked ? "bg-blue-500 shadow-md" : "bg-white hover:bg-gray-100"}`}
+                        ${allChecked ? "bg-blue-500 shadow-md" : "bg-gray-300 hover:bg-gray-500"}`}
                 >
                     {allChecked && <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>}
                 </span>
